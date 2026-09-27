@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>DCP Vision | Image Dehazing</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+
+<body>
+
+<!-- ==========================================
+     NAVBAR
+========================================== -->
+
+<nav class="navbar">
+
+    <div class="logo">
+        <span class="logo-icon">◈</span>
+        DCP<span>Vision</span>
+    </div>
+
+    <div class="nav-label">
+        IMAGE RESTORATION
+    </div>
+
+</nav>
+
+
+<!-- ==========================================
+     HERO SECTION
+========================================== -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <div class="badge">
+            DARK CHANNEL PRIOR
+        </div>
+
+        <h1>
+            See clearly through
+            <span>the haze.</span>
+        </h1>
+
+        <p>
+            Restore visibility, contrast and hidden scene details
+            using single-image dehazing powered by the
+            Dark Channel Prior.
+        </p>
+
+    </div>
+
+</section>
+
+
+<main>
+
+
+<!-- ==========================================
+     UPLOAD SECTION
+========================================== -->
+
+<section class="upload-section">
+
+    <div class="section-heading">
+
+        <span class="section-number">01</span>
+
+        <div>
+
+            <h2>Upload your image</h2>
+
+            <p>
+                Choose a hazy outdoor image to begin.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <form
+        action="/upload"
+        method="POST"
+        enctype="multipart/form-data"
+        id="uploadForm"
+    >
+
+        <label class="drop-zone" id="dropZone">
+
+            <input
+                type="file"
+                name="image"
+                id="imageInput"
+                accept="image/*"
+                required
+            >
+
+            <div class="upload-icon">
+                ↑
+            </div>
+
+            <h3>
+                Drop your image here
+            </h3>
+
+            <p>
+                or <strong>browse from your computer</strong>
+            </p>
+
+            <span class="file-types">
+                JPG • JPEG • PNG
+            </span>
+
+        </label>
+
+
+        <!-- IMAGE PREVIEW -->
+
+        <div
+            class="preview-container"
+            id="previewContainer"
+        >
+
+            <img
+                id="previewImage"
+                alt="Selected image preview"
+            >
+
+            <div class="preview-info">
+
+                <span id="fileName">
+                    Image selected
+                </span>
+
+                <button
+                    type="button"
+                    id="removeImage"
+                >
+                    Remove
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- DEHAZE BUTTON -->
+
+        <button
+            type="submit"
+            class="dehaze-button"
+            id="dehazeButton"
+        >
+
+            <span>
+                Dehaze Image
+            </span>
+
+            <span class="arrow">
+                →
+            </span>
+
+        </button>
+
+    </form>
+
+
+    {% if error %}
+
+    <div class="error-message">
+        {{ error }}
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+{% if original_image %}
+
+<!-- ==========================================
+     RESULTS SECTION
+========================================== -->
+
+<section class="results-section">
+
+    <div class="section-heading">
+
+        <span class="section-number">02</span>
+
+        <div>
+
+            <h2>Dehazing results</h2>
+
+            <p>
+                Compare the original image with the restored scene
+                and visualize every stage of the DCP pipeline.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================
+         BEFORE / AFTER SLIDER
+    ======================================= -->
+
+    <div class="comparison-wrapper">
+
+        <div class="comparison-header">
+
+            <span>BEFORE · HAZY IMAGE</span>
+
+            <span>AFTER · DEHAZED IMAGE</span>
+
+        </div>
+
+
+        <div
+            class="comparison-slider"
+            id="comparisonSlider"
+        >
+
+            <!-- DEHAZED IMAGE -->
+            <img
+                class="comparison-image after-image"
+                src="{{ dehazed_image }}"
+                alt="Dehazed image"
+            >
+
+
+            <!-- ORIGINAL IMAGE -->
+            <div
+                class="before-image-container"
+                id="beforeImageContainer"
+            >
+
+                <img
+                    class="comparison-image"
+                    src="{{ original_image }}"
+                    alt="Original hazy image"
+                >
+
+            </div>
+
+
+            <!-- SLIDER LINE -->
+            <div
+                class="slider-line"
+                id="sliderLine"
+            ></div>
+
+
+            <!-- SLIDER HANDLE -->
+            <div
+                class="slider-handle"
+                id="sliderHandle"
+            >
+                ↔
+            </div>
+
+        </div>
+
+
+        <p class="slider-hint">
+            Drag the slider to compare the original and dehazed image
+        </p>
+
+    </div>
+
+
+    <!-- ======================================
+         INTERMEDIATE DCP RESULTS
+    ======================================= -->
+
+    <div class="sub-results">
+
+
+        <!-- DARK CHANNEL -->
+
+        <div class="result-card">
+
+            <div class="small-card-header">
+
+                <span>DCP STEP 01</span>
+
+                <span>Dark Channel</span>
+
+            </div>
+
+
+            <img
+                src="{{ dark_channel }}"
+                alt="Dark channel"
+            >
+
+
+            <p>
+                Local minimum intensity representation used
+                to estimate the presence of haze.
+            </p>
+
+        </div>
+
+
+        <!-- TRANSMISSION MAP -->
+
+        <div class="result-card">
+
+            <div class="small-card-header">
+
+                <span>DCP STEP 02</span>
+
+                <span>Transmission Map</span>
+
+            </div>
+
+
+            <img
+                src="{{ transmission }}"
+                alt="Transmission map"
+            >
+
+
+            <p>
+                Estimated amount of scene radiance reaching
+                the camera through the atmosphere.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- ======================================
+         IMAGE ANALYSIS
+    ======================================= -->
+
+    <div class="analysis-section">
+
+
+        <div class="analysis-title">
+
+            <span class="section-number">03</span>
+
+            <div>
+
+                <h2>Image analysis</h2>
+
+                <p>
+                    Quantitative comparison of the input
+                    and restored image.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="metrics-grid">
+
+
+            <!-- CONTRAST -->
+
+            <div class="metric-card">
+
+                <span class="metric-name">
+                    CONTRAST
+                </span>
+
+
+                <div class="metric-values">
+
+                    <strong>
+                        {{ contrast_before }}
+                    </strong>
+
+                    <span>→</span>
+
+                    <strong class="after">
+                        {{ contrast_after }}
+                    </strong>
+
+                </div>
+
+
+                <small>
+                    Before → After
+                </small>
+
+            </div>
+
+
+            <!-- ENTROPY -->
+
+            <div class="metric-card">
+
+                <span class="metric-name">
+                    ENTROPY
+                </span>
+
+
+                <div class="metric-values">
+
+                    <strong>
+                        {{ entropy_before }}
+                    </strong>
+
+                    <span>→</span>
+
+                    <strong class="after">
+                        {{ entropy_after }}
+                    </strong>
+
+                </div>
+
+
+                <small>
+                    Before → After
+                </small>
+
+            </div>
+
+
+            <!-- PROCESSING TIME -->
+
+            <div class="metric-card">
+
+                <span class="metric-name">
+                    PROCESSING TIME
+                </span>
+
+
+                <div class="metric-values">
+
+                    <strong>
+                        {{ processing_time }}
+                    </strong>
+
+                    <span class="unit">
+                        sec
+                    </span>
+
+                </div>
+
+
+                <small>
+                    DCP computation
+                </small>
+
+            </div>
+
+
+            <!-- ATMOSPHERIC LIGHT -->
+
+            <div class="metric-card">
+
+                <span class="metric-name">
+                    ATMOSPHERIC LIGHT
+                </span>
+
+
+                <div class="atmospheric-value">
+
+                    {{ atmospheric_light }}
+
+                </div>
+
+
+                <small>
+                    Estimated A value
+                </small>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================
+         DOWNLOAD
+    ======================================= -->
+
+    <div class="download-section">
+
+
+        <div>
+
+            <h3>
+                Happy with the result?
+            </h3>
+
+            <p>
+                Save your restored image to your computer.
+            </p>
+
+        </div>
+
+
+        <a
+            class="download-button"
+            href="/download/{{ dehazed_image.split('/')[-1] }}"
+        >
+
+            Download Dehazed Image
+            ↓
+
+        </a>
+
+
+    </div>
+
+
+</section>
+
+{% endif %}
+
+
+<!-- ==========================================
+     HOW DCP WORKS
+========================================== -->
+
+<section class="method-section">
+
+
+    <div class="section-heading">
+
+        <span class="section-number">04</span>
+
+        <div>
+
+            <h2>How DCP works</h2>
+
+            <p>
+                The mathematical pipeline behind the
+                dehazing process.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="pipeline">
+
+
+        <!-- STEP 1 -->
+
+        <div class="pipeline-step">
+
+            <div class="step-icon">
+                01
+            </div>
+
+
+            <h3>
+                Dark Channel
+            </h3>
+
+
+            <p>
+                Identify pixels with very low intensity
+                in at least one color channel.
+            </p>
+
+        </div>
+
+
+        <div class="pipeline-line"></div>
+
+
+        <!-- STEP 2 -->
+
+        <div class="pipeline-step">
+
+            <div class="step-icon">
+                02
+            </div>
+
+
+            <h3>
+                Atmospheric Light
+            </h3>
+
+
+            <p>
+                Estimate the global atmospheric light
+                responsible for the haze.
+            </p>
+
+        </div>
+
+
+        <div class="pipeline-line"></div>
+
+
+        <!-- STEP 3 -->
+
+        <div class="pipeline-step">
+
+            <div class="step-icon">
+                03
+            </div>
+
+
+            <h3>
+                Transmission
+            </h3>
+
+
+            <p>
+                Estimate how much scene radiance
+                reaches the camera.
+            </p>
+
+        </div>
+
+
+        <div class="pipeline-line"></div>
+
+
+        <!-- STEP 4 -->
+
+        <div class="pipeline-step">
+
+            <div class="step-icon">
+                04
+            </div>
+
+
+            <h3>
+                Scene Recovery
+            </h3>
+
+
+            <p>
+                Recover the underlying haze-free scene
+                using the atmospheric scattering model.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- EQUATION -->
+
+    <div class="equation-box">
+
+        <span class="equation-label">
+            ATMOSPHERIC SCATTERING MODEL
+        </span>
+
+        <div class="equation">
+            I(x) = J(x)t(x) + A(1 − t(x))
+        </div>
+
+        <p>
+            The model describes the formation of a hazy image
+            from scene radiance, transmission and atmospheric light.
+        </p>
+
+    </div>
+
+
+</section>
+
+
+<!-- ==========================================
+     FOOTER
+========================================== -->
+
+<footer>
+
+
+    <div class="footer-logo">
+
+        DCP<span>Vision</span>
+
+    </div>
+
+
+    <p>
+        Single Image Dehazing using Dark Channel Prior
+    </p>
+
+
+    <p class="reference">
+
+        Based on He, Sun & Tang · CVPR 2009
+
+    </p>
+
+
+</footer>
+
+
+<script
+    src="{{ url_for('static', filename='script.js') }}"
+></script>
+
+
+</body>
+
+</html>
